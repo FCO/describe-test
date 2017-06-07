@@ -1,19 +1,18 @@
-use lib ".";
-use Describe;
+use lib "lib";
+use Test::Describable;
 
 describe "bla" => {
-    my $a;
-    before      { start { say "BEGIN!!!"; $a = 42 } }
-    before-each { start $a++ }
+    before      { a => 41 }
+    before-each -> :$a { a => $a + 1 }
     after       { say "FINISHED" }
     after-each  { say "ALMOST FINISHED" }
 
     describe "bla.bla" => {
-        it "1" => {ok True, $a}
-        it "2" => {ok True, $a}
+        it "1" => -> :$a {is $a, 42}
+        it "2" => -> :$a {is $a, 42}
     }
-    describe "bla.ble" => {
-        it "3" => {ok True, $a}
-        it "4" => {ok True, $a}
+    describe "bla.ble" => -> :$a {
+        it "3" => -> :$a {is $a, 42}
+        it "4" => -> :$a {is $a, 42}
     }
 }

@@ -1,5 +1,5 @@
-use lib ".";
-use Describe;
+use lib "lib";
+use Test::Describable;
 
 describe "test 001" => {
     before-each {
