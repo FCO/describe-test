@@ -1,13 +1,14 @@
 use Test::Describable::Containers;
+use Test::Describable::Describe;
 proto MAIN(|) is export {
     {*}
 }
-multi MAIN(:$DEBUG! where $DEBUG == True, |) {
+multi MAIN(Bool :$DEBUG! where $DEBUG == True) {
     my @*tests;
     my $result = $first-level-descrs.run: :$DEBUG;
     say report $result, :$DEBUG
 }
-multi MAIN(|) {
+multi MAIN() {
     my @*tests;
     say report $first-level-descrs.run
 }
@@ -17,14 +18,18 @@ multi MAIN("list") {
 }
 
 multi MAIN("lines") {
-    for %per-line.keys.sort -> $k {
-        say "$k  => {%per-line{$k}.^name}"
-    }
+    say %per-line.keys.sort(+*).join: ", "
 }
 
-multi MAIN("run", UInt() $line) {
+#multi MAIN("run", UInt() $line) {
+#    my @*tests;
+#    say report %per-line{+$line}.run
+#}
+
+multi MAIN("run", *@lines) {
     my @*tests;
-    say report %per-line{+$line}.run
+    my %descrs = %per-line{@lines.map: +*}:kv;
+    say report Describe.new(:%descrs).run
 }
 
 sub report(@tests, :$DEBUG) {
