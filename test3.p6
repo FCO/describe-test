@@ -2,10 +2,10 @@ use lib "lib";
 use Test::Describable;
 
 describe "bla" => {
-    before      { a => 41 }
+    before      { say "BEGIN"; a => 41 }
     before-each -> :$a { a => $a + 1 }
-    after       { say "FINISHED" }
-    after-each  { say "ALMOST FINISHED" }
+    after       -> :$a { say "FINISHED: $a" }
+    after-each { say "ALMOST FINISHED" }
 
     describe "bla.bla" => {
         it "1" => -> :$a {is $a, 42}

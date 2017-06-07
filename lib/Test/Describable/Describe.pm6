@@ -1,4 +1,22 @@
 use Test::Describable::Funcs;
+sub run-sub-with-data(&code, %data) {
+    my @keys = &code
+        .signature
+        .params
+        .grep(*.named)
+        .map: *.name.substr: 1
+    ;
+    my %pairs = @keys Z=> %data{|@keys};
+    my $res;
+    if %pairs {
+        $res = code |%pairs
+    } else {
+        $res = code $%pairs
+    }
+    $res = await $res if $res ~~ Promise;
+    %data ,= |$res if $res ~~ Associative
+}
+
 class Describe {
     has Str      $.name;
     has Callable %.its;
@@ -17,12 +35,12 @@ class Describe {
         (
             |do for %!descrs.kv -> $name, $d {
                 (
-                    "$name => {$d.line}",
+                    "$name: #{$d.line}",
                     $d.list.indent(5),
                 ).join: "\n"
             },
             |do for %!its.kv -> $name, &it {
-                "$name => {&it.line}"
+                "$name #{&it.line}"
             }
         ).join: "\n"
     }
@@ -30,9 +48,7 @@ class Describe {
         my @tests;
         for keys @!before (-) $run -> &exec-before {
             $.debug("before", :$DEBUG);
-            my $res = exec-before;
-            $res = await $res if $res ~~ Promise;
-            %data ,= |$res if $res ~~ Associative
+            %data ,= |run-sub-with-data &exec-before, %data
         }
         my @proms = |do for %!descrs.values -> $d {
             start {
@@ -51,30 +67,17 @@ class Describe {
             start {
                 for @!before-each -> &exec-before-each {
                     $.debug("before each...", :$DEBUG);
-                    my @keys = &exec-before-each.signature.params.map: *.name.substr: 1;
-                    my %pairs = @keys Z=> %data{|@keys};
-                    my $res;
-                    if %pairs {
-                        $res = exec-before-each |%pairs
-                    } else {
-                        $res = exec-before-each
-                    }
-                    $res = await $res if $res ~~ Promise;
-                    %data ,= |$res if $res ~~ Associative
+                    %data ,= |run-sub-with-data &exec-before-each, %data
                 }
                 $.debug("running it", :$DEBUG);
                 my @*TESTS;
                 #my $ret = it |%data;
-                my $res = it |%(%data{&it.signature.params.map: *.name.substr: 1}:kv);
-                if $res ~~ Promise {
-                    $res = await $res;
-                    %data ,= |$res if $res ~~ Associative
-                }
+                %data ,= |run-sub-with-data &it, %data;
 
                 @tests.append: @*TESTS;
                 for @!after-each -> &exec-after-each {
                     $.debug("after each...", :$DEBUG);
-                    exec-after-each
+                    %data ,= |run-sub-with-data &exec-after-each, %data
                 }
                 CATCH {
                     default {
@@ -89,8 +92,7 @@ class Describe {
 
         for keys @!after (-) $run -> &exec-after {
             $.debug("after", :$DEBUG);
-            my $res = exec-after;
-            await $res if $res ~~ Promise;
+            run-sub-with-data &exec-after, %data
         }
         @tests
     }

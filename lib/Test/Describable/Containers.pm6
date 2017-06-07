@@ -60,7 +60,12 @@ multi it(Pair (:$key, :&value)) is hidden-from-backtrace {
 multi it(Str $name is copy, &code) is hidden-from-backtrace {
     die "'it' must be used inside of a 'describe'" without %*ITS;
     $name //= "NO NAME IT {++$}";
-    %per-line{&code.line} //= Describe.new;
+    %per-line{&code.line} //= Describe.new:
+        :before(@*BEFORE),
+        :before-each(@*BEFORE-EACH),
+        :after(@*AFTER),
+        :after-each(@*AFTER-EACH),
+    ;
     %per-line{&code.line}.its.push: $name => &code;
     %*ITS.push: $name => &code;
 }
