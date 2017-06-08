@@ -8,7 +8,7 @@ multi describe((:$key, :&value)) is hidden-from-backtrace {
     samewith $key, &value
 }
 multi describe(Str $name is copy, &code) is hidden-from-backtrace {
-    $name //= "NO NAME DESCRIBE {++$}";
+    $name //= "NO NAMED DESCRIBE {++$}";
     my %descrs;
     my %its;
     my @before      = @*BEFORE       with @*BEFORE;
@@ -59,7 +59,7 @@ multi it(Pair (:$key, :&value)) is hidden-from-backtrace {
 }
 multi it(Str $name is copy, &code) is hidden-from-backtrace {
     die "'it' must be used inside of a 'describe'" without %*ITS;
-    $name //= "NO NAME IT {++$}";
+    $name //= "NO NAMED IT {++$}";
     %per-line{&code.line} //= Describe.new:
         :before(@*BEFORE),
         :before-each(@*BEFORE-EACH),

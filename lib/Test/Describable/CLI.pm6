@@ -21,15 +21,16 @@ multi MAIN("lines") {
     say %per-line.keys.sort(+*).join: ", "
 }
 
-#multi MAIN("run", UInt() $line) {
-#    my @*tests;
-#    say report %per-line{+$line}.run
-#}
-
 multi MAIN("run", *@lines) {
     my @*tests;
-    my %descrs = %per-line{@lines.map: +*}:kv;
-    say report Describe.new(:%descrs).run
+    my $desc;
+    if @lines > 1 {
+        my %descrs = %per-line{@lines.map: +*}:kv;
+        $desc = Describe.new(:%descrs)
+    } else {
+        $desc = %per-line{+@lines.first}
+    }
+    say report $desc.run
 }
 
 sub report(@tests, :$DEBUG) {
@@ -41,7 +42,6 @@ sub report(@tests, :$DEBUG) {
             if $test<describe>:exists {
                 $res = "{report($test<describe>)}".indent: 5;
             }
-            #.note with $test<error>;
             my $error = S:g/^^/# / with $test<error> and $test<error>.?gist;
             |(
                 $res || Empty,
